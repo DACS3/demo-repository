@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1000773932220",
+    "project_id": "dacs-f3ee9",
+    "storage_bucket": "dacs-f3ee9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000773932220:android:b5412522b308bd58e4ecb9",
+        "android_client_info": {
+          "package_name": "com.example.eduqizpro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCufPktq-P2wR9ZzbLDOUIH9r-4X0p-4z4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
