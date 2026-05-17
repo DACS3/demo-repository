@@ -1,5 +1,6 @@
 package com.example.eduqizpro.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -28,8 +29,12 @@ fun LoginScreen(
     onLoginSuccess: (String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val sharedPrefs = remember { context.getSharedPreferences("eduqiz_prefs", Context.MODE_PRIVATE) }
+    
+    var email by remember { mutableStateOf(sharedPrefs.getString("remembered_email", "") ?: "") }
     var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(sharedPrefs.getBoolean("remember_me", true)) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
@@ -54,7 +59,6 @@ fun LoginScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Logo Placeholder
                     Surface(
                         modifier = Modifier.size(100.dp),
                         shape = CircleShape,
@@ -116,6 +120,20 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp)
                     )
 
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = rememberMe,
+                            onCheckedChange = { rememberMe = it },
+                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF6200EE))
+                        )
+                        Text("Ghi nhớ đăng nhập", fontSize = 14.sp)
+                    }
+
                     if (errorMessage != null) {
                         Text(
                             text = errorMessage!!,
@@ -125,7 +143,7 @@ fun LoginScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
                         onClick = {
@@ -135,6 +153,15 @@ fun LoginScreen(
                                 try {
                                     val user = authRepository.login(email, password)
                                     if (user != null) {
+                                        sharedPrefs.edit().apply {
+                                            putBoolean("remember_me", rememberMe)
+                                            if (rememberMe) {
+                                                putString("remembered_email", email)
+                                            } else {
+                                                remove("remembered_email")
+                                            }
+                                            apply()
+                                        }
                                         onLoginSuccess(user.role)
                                     } else {
                                         errorMessage = "Email hoặc mật khẩu không đúng"
@@ -173,9 +200,9 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Divider(modifier = Modifier.width(50.dp).padding(horizontal = 8.dp))
+                HorizontalDivider(modifier = Modifier.width(50.dp).padding(horizontal = 8.dp))
                 Text("EduQiz Excellence", color = Color.Gray, fontSize = 12.sp)
-                Divider(modifier = Modifier.width(50.dp).padding(horizontal = 8.dp))
+                HorizontalDivider(modifier = Modifier.width(50.dp).padding(horizontal = 8.dp))
             }
             Spacer(modifier = Modifier.height(40.dp))
         }

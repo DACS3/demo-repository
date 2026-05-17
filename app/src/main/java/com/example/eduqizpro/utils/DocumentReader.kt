@@ -30,23 +30,31 @@ object DocumentReader {
     }
 
     private fun readPdf(inputStream: InputStream): String {
-        val document = PDDocument.load(inputStream)
-        val stripper = PDFTextStripper().apply {
-            startPage = 1
-            endPage = 30 // Bạn có thể cân nhắc nhận tham số cho endPage nếu muốn linh hoạt hơn
-            setSortByPosition(true)
+        return try {
+            val document = PDDocument.load(inputStream)
+            val stripper = PDFTextStripper().apply {
+                startPage = 1
+                endPage = 200 // Increased page limit for conversion
+                setSortByPosition(true)
+            }
+            val text = stripper.getText(document)
+            document.close()
+            text
+        } catch (e: Exception) {
+            ""
         }
-        val text = stripper.getText(document)
-        document.close()
-        return text
     }
 
     private fun readDocx(inputStream: InputStream): String {
-        val doc = XWPFDocument(inputStream)
-        val extractor = XWPFWordExtractor(doc)
-        val text = extractor.text
-        extractor.close()
-        doc.close()
-        return text
+        return try {
+            val doc = XWPFDocument(inputStream)
+            val extractor = XWPFWordExtractor(doc)
+            val text = extractor.text
+            extractor.close()
+            doc.close()
+            text
+        } catch (e: Exception) {
+            ""
+        }
     }
 }

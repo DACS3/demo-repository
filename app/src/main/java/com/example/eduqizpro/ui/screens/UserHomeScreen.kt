@@ -38,7 +38,10 @@ fun UserHomeScreen(
     onNavigateToCreateQuiz: () -> Unit,
     onNavigateToQuizList: () -> Unit,
     onNavigateToSummary: () -> Unit,
-    onNavigateToSavedSummaries: () -> Unit   // ← Thêm callback mới
+    onNavigateToSavedSummaries: () -> Unit,
+    onNavigateToCreateFlashcard: () -> Unit,
+    onNavigateToFlashcardList: () -> Unit,
+    onNavigateToConverter: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository() }
@@ -60,14 +63,14 @@ fun UserHomeScreen(
     val utilities = listOf(
         FeatureItem("Tạo trắc nghiệm", Icons.Default.AddCircle, Color(0xFF6200EE), "create_quiz"),
         FeatureItem("Tóm tắt PDF", Icons.Default.Description, Color(0xFFF44336), "summary"),
-        FeatureItem("Flash card", Icons.Default.Star, Color(0xFFFF9800)),
-        FeatureItem("Word sang PDF", Icons.Default.Share, Color(0xFF2196F3))
+        FeatureItem("Flash card", Icons.Default.Star, Color(0xFFFF9800), "create_flashcard"),
+        FeatureItem("Chuyển đổi tài liệu", Icons.Default.Share, Color(0xFF2196F3), "converter")
     )
 
     val management = listOf(
         FeatureItem("Trắc nghiệm lưu", Icons.Default.List, Color(0xFF4CAF50), "quiz_list"),
-        FeatureItem("Tóm tắt đã lưu", Icons.Default.AccountBox, Color(0xFF009688), "saved_summaries"), // ← Đã sửa
-        FeatureItem("Flash-card lưu", Icons.Default.Info, Color(0xFFFFC107)),
+        FeatureItem("Tóm tắt đã lưu", Icons.Default.AccountBox, Color(0xFF009688), "saved_summaries"),
+        FeatureItem("Flash-card lưu", Icons.Default.Info, Color(0xFFFFC107), "flashcard_list"),
         FeatureItem("Shared items", Icons.Default.Send, Color(0xFF9C27B0))
     )
 
@@ -83,7 +86,7 @@ fun UserHomeScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF6200EE),
                     titleContentColor = Color.White,
-                    actionIconContentColor = Color.White
+                    navigationIconContentColor = Color.White
                 )
             )
         }
@@ -102,6 +105,8 @@ fun UserHomeScreen(
                     when (route) {
                         "create_quiz" -> onNavigateToCreateQuiz()
                         "summary" -> onNavigateToSummary()
+                        "create_flashcard" -> onNavigateToCreateFlashcard()
+                        "converter" -> onNavigateToConverter()
                     }
                 }
             }
@@ -111,7 +116,8 @@ fun UserHomeScreen(
                 FeatureGrid(management) { route ->
                     when (route) {
                         "quiz_list" -> onNavigateToQuizList()
-                        "saved_summaries" -> onNavigateToSavedSummaries()   // ← Xử lý click
+                        "saved_summaries" -> onNavigateToSavedSummaries()
+                        "flashcard_list" -> onNavigateToFlashcardList()
                     }
                 }
             }
@@ -129,7 +135,6 @@ fun UserHomeScreen(
     }
 }
 
-// Các hàm còn lại giữ nguyên
 @Composable
 fun UserHeader(user: User?) {
     Box(

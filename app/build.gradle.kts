@@ -20,7 +20,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true          // Nên bật khi release
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -29,7 +29,7 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17   // Nâng lên 17 (khuyến nghị 2026)
+        sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
@@ -46,14 +46,23 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/INDEX.LIST"
             excludes += "META-INF/DEPENDENCIES"
-            excludes += "META-INF/versions/**"   // Tránh conflict với một số thư viện mới
+            excludes += "META-INF/NOTICE*"
+            excludes += "META-INF/LICENSE*"
+            excludes += "META-INF/git.properties"
+            
+            // Exclude Log4j configurations that might cause issues
+            excludes += "org/apache/logging/log4j/**"
+            
+            pickFirsts += "META-INF/versions/9/module-info.class"
         }
     }
 }
 
 configurations {
     all {
+        // Force exclusion of log4j to prevent NoClassDefFoundError on Android
         exclude(group = "org.apache.logging.log4j", module = "log4j-api")
+        exclude(group = "org.apache.logging.log4j", module = "log4j-core")
     }
 }
 
@@ -69,24 +78,27 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")
 
-    // Đọc file PDF & Word
+    // PDF Support
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
-    implementation("org.apache.poi:poi-ooxml:5.3.0")   // Nâng nhẹ version
+    
+    // Apache POI - Using 4.1.2 as it's more Android-friendly
+    implementation("org.apache.poi:poi-ooxml:4.1.2") {
+        exclude(group = "org.apache.xmlgraphics", module = "batik-all")
+        exclude(group = "xml-apis", module = "xml-apis")
+    }
+    implementation("javax.xml.stream:stax-api:1.0-2")
+    implementation("com.fasterxml.woodstox:woodstox-core:6.5.1")
 
-    // ==================== FIREBASE (2026) ====================
+    // Firebase (2026)
     implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
-
-    // Firebase AI Logic - Để BOM quản lý version
     implementation("com.google.firebase:firebase-ai")
-
-    // Các Firebase khác
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
 
-    // Khác
-    implementation("com.google.code.gson:gson:2.12.0")   // Cập nhật
-    implementation("io.coil-kt:coil-compose:2.7.0")       // Cập nhật
+    // Miscellaneous
+    implementation("com.google.code.gson:gson:2.12.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
     // Test
