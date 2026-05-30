@@ -2,6 +2,7 @@ package com.example.eduqizpro.utils
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -11,35 +12,46 @@ class DocumentSummarizer(context: Context) : BaseAIModel(context) {
         val fileContent = try {
             DocumentReader.readTextFromUri(context, uri)
         } catch (e: Exception) {
-            return@withContext "Lỗi: Không thể đọc file."
+            Log.e("DocumentSummarizer", "Read error", e)
+            return@withContext "Lỗi: Không thể đọc nội dung file."
         }
 
-        if (fileContent.isBlank()) {
-            return@withContext "Lỗi: File trống hoặc không đọc được nội dung."
+        if (fileContent.isBlank() || fileContent.startsWith("Lỗi")) {
+            return@withContext "Lỗi: File trống hoặc không đọc được nội dung văn bản."
+        }
+
+        // Giới hạn độ dài văn bản để tránh quá tải token (khoảng 100k ký tự cho Gemini 1.5 Flash là an toàn)
+        val limitedContent = if (fileContent.length > 100000) {
+            fileContent.substring(0, 100000) + "... [Văn bản quá dài, đã bị cắt bớt]"
+        } else {
+            fileContent
         }
 
         val finalPrompt = """
-            Bạn là chuyên gia tóm tắt văn bản chuyên nghiệp bằng tiếng Việt.
-            Yêu cầu cụ thể của người dùng: $userPrompt
+            Bạn là một chuyên gia phân tích và tóm tắt văn bản chuyên nghiệp.
+            Hãy giúp tôi tóm tắt tài liệu dưới đây bằng tiếng Việt.
             
-            Nội dung văn bản cần tóm tắt:
-            $fileContent
+            Yêu cầu riêng từ người dùng: $userPrompt
             
-            Yêu cầu kết quả:
-            - Trình bày súc tích, rõ ràng, dễ hiểu.
-            - Sử dụng gạch đầu dòng (-) cho các ý chính.
-            - Giữ nguyên số liệu, năm tháng, tên riêng quan trọng.
-            - Bố cục: 
-              + Tổng quan ngắn gọn
-              + Các ý chính
-              + Kết luận hoặc điểm nổi bật
+            Nội dung tài liệu:
+            ---
+            $limitedContent
+            ---
+            
+            Hãy trình bày kết quả theo cấu trúc sau:
+            1. **Tổng quan**: 1-2 câu về chủ đề chính của tài liệu.
+            2. **Các điểm chính**: Liệt kê các ý quan trọng nhất dưới dạng gạch đầu dòng (-).
+            3. **Kết luận/Đánh giá**: Tóm lược giá trị của tài liệu này.
+            
+            Lưu ý: Giữ giọng văn khách quan, chính xác và chuyên nghiệp.
         """.trimIndent()
 
         return@withContext try {
             val response = generativeModel.generateContent(finalPrompt)
-            response.text ?: "AI không thể tóm tắt tài liệu này."
+            response.text ?: "AI không thể trích xuất nội dung tóm tắt. Vui lòng thử lại."
         } catch (e: Exception) {
-            "Lỗi kết nối AI: ${e.localizedMessage ?: e.message}"
+            Log.e("DocumentSummarizer", "AI Error", e)
+            "Lỗi kết nối AI: ${e.localizedMessage ?: "Vui lòng kiểm tra kết nối mạng hoặc API Key."}"
         }
     }
 }

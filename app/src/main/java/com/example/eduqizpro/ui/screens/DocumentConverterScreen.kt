@@ -6,18 +6,31 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,7 +83,6 @@ fun DocumentConverterScreen(onBack: () -> Unit) {
                             } ?: false
                         } ?: false
                     } catch (t: Throwable) {
-                        // Catch Throwable to prevent app from closing on fatal errors like NoClassDefFoundError
                         t.printStackTrace()
                         false
                     }
@@ -81,7 +93,7 @@ fun DocumentConverterScreen(onBack: () -> Unit) {
                     selectedUri = null
                     fileName = ""
                 } else {
-                    Toast.makeText(context, "Chuyển đổi thất bại. Có thể tệp tin quá phức tạp hoặc bị lỗi hệ thống.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Chuyển đổi thất bại. Vui lòng kiểm tra lại định dạng tệp.", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -90,117 +102,262 @@ fun DocumentConverterScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Chuyển đổi tài liệu", fontWeight = FontWeight.Bold) },
+                title = { Text("Chuyển đổi tài liệu", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF6200EE),
+                    containerColor = Color(0xFF673AB7),
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 )
             )
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFFF8F9FF), Color(0xFFEDEEF7))
+                    )
+                )
         ) {
-            Icon(
-                imageVector = Icons.Default.Description,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = Color(0xFF6200EE)
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Text(
-                text = "Word ↔ PDF",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Chuyển đổi và giữ định dạng cơ bản",
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                // Hero Section
+                Surface(
+                    shape = RoundedCornerShape(32.dp),
+                    color = Color.White,
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.size(120.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = null,
+                            modifier = Modifier.size(60.dp),
+                            tint = Color(0xFF673AB7)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text(
+                    text = "Word ↔ PDF",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF2D3436)
+                )
+                
+                Text(
+                    text = "Nhanh chóng, an toàn và bảo mật",
+                    fontSize = 15.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
 
-            Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
-            if (selectedUri != null) {
+                // Action Area
+                AnimatedVisibility(
+                    visible = selectedUri == null,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Button(
+                        onClick = { pickFileLauncher.launch("*/*") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7)),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                    ) {
+                        Icon(Icons.Default.FileUpload, contentDescription = null)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Chọn tệp tin để chuyển đổi", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = selectedUri != null,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column {
+                        FilePreviewCard(
+                            fileName = fileName,
+                            conversionType = conversionType,
+                            onCancel = { 
+                                selectedUri = null
+                                fileName = ""
+                            }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Button(
+                            onClick = {
+                                val baseName = if (fileName.contains(".")) fileName.substringBeforeLast(".") else fileName
+                                val outName = if (conversionType == "WORD_TO_PDF") "$baseName.pdf" else "$baseName.docx"
+                                saveFileLauncher.launch(outName)
+                            },
+                            enabled = !isConverting,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(64.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF4CAF50),
+                                disabledContainerColor = Color(0xFF4CAF50).copy(alpha = 0.5f)
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            if (isConverting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = Color.White,
+                                    strokeWidth = 3.dp
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("Đang chuyển đổi...", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            } else {
+                                Icon(Icons.Default.FileDownload, contentDescription = null)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("Chuyển đổi và Lưu ngay", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        
+                        TextButton(
+                            onClick = { pickFileLauncher.launch("*/*") },
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp),
+                            enabled = !isConverting
+                        ) {
+                            Text("Chọn tệp khác", color = Color(0xFF673AB7))
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // Info Section
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.6f)),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Description, contentDescription = null, tint = Color.Gray)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = fileName,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            val label = if (conversionType == "WORD_TO_PDF") "Chuyển sang PDF" else "Chuyển sang Word"
-                            Text(
-                                text = label,
-                                fontSize = 12.sp,
-                                color = Color(0xFF6200EE)
-                            )
+                        Surface(
+                            color = Color(0xFFE8EAF6),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF673AB7), modifier = Modifier.size(20.dp))
+                            }
                         }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            "Hỗ trợ các định dạng .docx và .pdf với cấu trúc văn bản, bảng và hình ảnh cơ bản.",
+                            fontSize = 12.sp,
+                            color = Color.DarkGray,
+                            lineHeight = 18.sp
+                        )
                     }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            Button(
-                onClick = { pickFileLauncher.launch("*/*") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(if (selectedUri == null) "Chọn tệp tin" else "Chọn tệp khác")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    val baseName = if (fileName.contains(".")) fileName.substringBeforeLast(".") else fileName
-                    val outName = if (conversionType == "WORD_TO_PDF") "$baseName.pdf" else "$baseName.docx"
-                    saveFileLauncher.launch(outName)
-                },
-                enabled = selectedUri != null && !isConverting,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                if (isConverting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Đang xử lý...")
-                } else {
-                    Text("Chuyển đổi và Lưu")
                 }
             }
         }
+    }
+}
+
+@Composable
+fun FilePreviewCard(fileName: String, conversionType: String, onCancel: () -> Unit) {
+    val isWordToPdf = conversionType == "WORD_TO_PDF"
+    val accentColor = if (isWordToPdf) Color(0xFF2196F3) else Color(0xFFF44336)
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    color = accentColor.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Description, 
+                            contentDescription = null, 
+                            tint = accentColor
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = fileName,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = if (isWordToPdf) "Microsoft Word Document" else "PDF Document",
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
+                }
+                IconButton(onClick = onCancel) {
+                    Icon(Icons.Default.SwapHoriz, contentDescription = "Change", tint = Color.LightGray)
+                }
+            }
+            
+            Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color(0xFFF0F0F0))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FormatBadge(text = if (isWordToPdf) "DOCX" else "PDF", color = accentColor)
+                Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = Color.LightGray)
+                FormatBadge(text = if (isWordToPdf) "PDF" else "DOCX", color = if (isWordToPdf) Color(0xFFF44336) else Color(0xFF2196F3))
+            }
+        }
+    }
+}
+
+@Composable
+fun FormatBadge(text: String, color: Color) {
+    Surface(
+        color = color,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+        )
     }
 }
 

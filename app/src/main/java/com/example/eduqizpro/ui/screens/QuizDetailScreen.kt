@@ -48,6 +48,10 @@ fun QuizDetailScreen(quiz: Quiz, onBack: () -> Unit) {
     val userAnswers = remember { mutableStateMapOf<Int, Int>() }
     var isLoading by remember { mutableStateOf(false) }
 
+    // State cho chế độ giải bài (Quiz Mode)
+    var currentSolvingIndex by remember { mutableIntStateOf(0) }
+    val quizIndices = remember { mutableStateListOf<Int>() }
+
     // State cho Dialog Thêm/Sửa
     var showEditDialog by remember { mutableStateOf(false) }
     var editingIndex by remember { mutableIntStateOf(-1) } // -1 là thêm mới
@@ -94,7 +98,15 @@ fun QuizDetailScreen(quiz: Quiz, onBack: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
-                    onClick = { isSolvingMode = true }, 
+                    onClick = { 
+                        // Khởi tạo thứ tự câu hỏi ngẫu nhiên
+                        quizIndices.clear()
+                        quizIndices.addAll(editableQuestions.indices)
+                        quizIndices.shuffle()
+                        currentSolvingIndex = 0
+                        userAnswers.clear()
+                        isSolvingMode = true 
+                    }, 
                     modifier = Modifier.fillMaxWidth().height(56.dp), 
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -173,39 +185,91 @@ fun QuizDetailScreen(quiz: Quiz, onBack: () -> Unit) {
                     if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     else Text("LƯU THAY ĐỔI")
                 }
-            } else {
-                // CHẾ ĐỘ GIẢI/XEM ĐÁP ÁN
+            } else if (isSolvingMode && !showResults) {
+                // CHẾ ĐỘ GIẢI (QUIZ MODE) - HIỆN TỪNG CÂU VÀ TRỘN ĐỀ
+                if (quizIndices.isNotEmpty()) {
+                    val actualIndex = quizIndices[currentSolvingIndex]
+                    val question = editableQuestions[actualIndex]
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        // Hiển thị tiến độ
+                        LinearProgressIndicator(
+                            progress = { (currentSolvingIndex + 1).toFloat() / quizIndices.size },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(4.dp)),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        Text(
+                            "Câu ${currentSolvingIndex + 1} / ${quizIndices.size}", 
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Spacer(Modifier.height(16.dp))
+
+                        QuestionDisplayItem(
+                            number = currentSolvingIndex + 1,
+                            question = question,
+                            isSolving = true,
+                            selectedOption = userAnswers[actualIndex],
+                            onOptionSelected = { userAnswers[actualIndex] = it },
+                            showCorrect = false
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        TextButton(
+                            onClick = { if (currentSolvingIndex > 0) currentSolvingIndex-- },
+                            enabled = currentSolvingIndex > 0
+                        ) {
+                            Icon(Icons.Default.ChevronLeft, null)
+                            Text("CÂU TRƯỚC")
+                        }
+
+                        if (currentSolvingIndex < quizIndices.size - 1) {
+                            Button(onClick = { currentSolvingIndex++ }) {
+                                Text("TIẾP THEO")
+                                Icon(Icons.Default.ChevronRight, null)
+                            }
+                        } else {
+                            Button(
+                                onClick = { showResults = true },
+                                enabled = userAnswers.size == editableQuestions.size,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                            ) {
+                                Icon(Icons.Default.Send, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("NỘP BÀI")
+                            }
+                        }
+                    }
+                }
+            } else if (showResults) {
+                // CHẾ ĐỘ XEM ĐÁP ÁN (HIỆN TẤT CẢ ĐỂ REVIEW)
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     itemsIndexed(editableQuestions) { index, question ->
                         QuestionDisplayItem(
                             number = index + 1,
                             question = question,
-                            isSolving = isSolvingMode && !showResults,
+                            isSolving = false,
                             selectedOption = userAnswers[index],
-                            onOptionSelected = { userAnswers[index] = it },
-                            showCorrect = showResults
+                            onOptionSelected = {},
+                            showCorrect = true
                         )
                     }
                 }
-                if (showResults) {
-                    Button(
-                        onClick = { 
-                            showResults = false
-                            isSolvingMode = false
-                            userAnswers.clear()
-                        }, 
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-                    ) { 
-                        Text("QUAY LẠI") 
-                    }
-                } else if (isSolvingMode) {
-                    Button(
-                        onClick = { showResults = true }, 
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp), 
-                        enabled = userAnswers.size == editableQuestions.size
-                    ) { 
-                        Text("NỘP BÀI") 
-                    }
+                Button(
+                    onClick = { 
+                        showResults = false
+                        isSolvingMode = false
+                        userAnswers.clear()
+                    }, 
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                ) { 
+                    Text("QUAY LẠI")
                 }
             }
         }
