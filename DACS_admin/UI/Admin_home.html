@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng điều khiển Admin - EduQizPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="css/admin-styles.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand"><i class="fa-solid fa-graduation-cap me-2"></i>EduQizPro Admin</div>
+    <div class="sidebar-menu">
+        <div class="menu-item active" onclick="switchTab('thongke', this)"><i class="fa-solid fa-chart-pie"></i>Thống kê hệ thống</div>
+        <div class="menu-item" onclick="switchTab('users', this)"><i class="fa-solid fa-users"></i>Quản lý Người dùng</div>
+        <div class="menu-item" onclick="switchTab('comments', this)"><i class="fa-solid fa-comments"></i>Quản lý Bình luận</div>
+        <div class="menu-item" onclick="switchTab('coins', this)"><i class="fa-solid fa-coins"></i>Quản lý Xu (Coin)</div>
+        <hr>
+        <div class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i>Đăng xuất</div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="top-navbar">
+        <h4 class="m-0 fw-bold text-secondary">Thống kê hệ thống</h4>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-primary p-2">Quyền: Tổng quản trị</span>
+            <div class="fw-semibold"><i class="fa-solid fa-circle-user text-success me-1"></i> Admin EduQiz</div>
+        </div>
+    </div>
+
+    <!-- ── TAB THỐNG KÊ ──────────────────────────────────────────────────────── -->
+    <div id="section-thongke" class="content-section active">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card stat-card p-3 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted text-uppercase fs-7">Tổng Người Dùng</h6>
+                            <h2 class="fw-bold m-0 text-dark">0</h2>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary"><i class="fa-solid fa-users fa-xl"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card p-3 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted text-uppercase fs-7">Số Bài Quiz Đã Tạo</h6>
+                            <h2 class="fw-bold m-0 text-dark">0</h2>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success"><i class="fa-solid fa-cubes fa-xl"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card p-3 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted text-uppercase fs-7">Tổng Số Bình Luận</h6>
+                            <h2 class="fw-bold m-0 text-dark">0</h2>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning"><i class="fa-solid fa-comments fa-xl"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card p-3 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted text-uppercase fs-7">Lượng Xu Lưu Hành</h6>
+                            <h2 class="fw-bold m-0 text-dark">0K</h2>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info"><i class="fa-solid fa-coins fa-xl"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-none rounded-4 shadow-sm mt-4 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold m-0">Biểu đồ thống kê hệ thống</h5>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Bộ lọc thời gian">
+                    <button type="button" class="btn btn-outline-primary active" id="btn-filter-day" onclick="updateTimeFilter('day')">Ngày</button>
+                    <button type="button" class="btn btn-outline-primary" id="btn-filter-month" onclick="updateTimeFilter('month')">Tháng</button>
+                    <button type="button" class="btn btn-outline-primary" id="btn-filter-year" onclick="updateTimeFilter('year')">Năm</button>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card p-3 shadow-sm border-0 bg-white">
+                        <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-users me-2 text-primary"></i>Người dùng đăng ký mới</h6>
+                        <div style="position: relative; height:250px;">
+                            <canvas id="chart-users"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-3 shadow-sm border-0 bg-white">
+                        <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-cubes me-2 text-success"></i>Đề trắc nghiệm đã tạo</h6>
+                        <div style="position: relative; height:250px;">
+                            <canvas id="chart-quizzes"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-3 shadow-sm border-0 bg-white">
+                        <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-money-bill-trend-up me-2 text-warning"></i>Doanh thu bán xu (VND)</h6>
+                        <div style="position: relative; height:250px;">
+                            <canvas id="chart-revenue"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TAB QUẢN LÝ USER ─────────────────────────────────────────────────── -->
+    <div id="section-users" class="content-section">
+        <div class="card border-none rounded-4 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0">Danh sách người dùng</h5>
+                <div class="input-group" style="max-width: 320px;">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" id="user-search" class="form-control" placeholder="Tìm theo tên, email..." oninput="filterUsers()">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="users-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>UID</th>
+                            <th>Họ và tên</th>
+                            <th>Email</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- Phân trang -->
+            <div class="d-flex justify-content-between align-items-center mt-3" id="pagination-users-container" style="display: none;">
+                <span class="text-muted small" id="pagination-users-info"></span>
+                <nav>
+                    <ul class="pagination pagination-sm m-0" id="pagination-users-controls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TAB QUẢN LÝ BÌNH LUẬN ─────────────────────────────────────────────── -->
+    <div id="section-comments" class="content-section">
+        <div class="card border-none rounded-4 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0">Kiểm duyệt bình luận bài viết</h5>
+                <div class="input-group" style="max-width: 320px;">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" id="comment-search" class="form-control" placeholder="Tìm theo tên, nội dung..." oninput="filterComments()">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="comments-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Người gửi</th>
+                            <th>Nội dung</th>
+                            <th>Loại</th>
+                            <th>Thời gian</th>
+                            <th>Xử lý</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- Phân trang bình luận -->
+            <div class="d-flex justify-content-between align-items-center mt-3" id="pagination-comments-container" style="display: none;">
+                <span class="text-muted small" id="pagination-comments-info"></span>
+                <nav>
+                    <ul class="pagination pagination-sm m-0" id="pagination-comments-controls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TAB QUẢN LÝ XU ───────────────────────────────────────────────────── -->
+    <div id="section-coins" class="content-section">
+        <div class="card border-none rounded-4 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0">Cộng / Trừ xu thưởng cho học viên</h5>
+                <div class="input-group" style="max-width: 320px;">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" id="coin-search" class="form-control" placeholder="Tìm theo email..." oninput="filterCoins()">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="coins-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Email người dùng</th>
+                            <th>Số xu hiện tại</th>
+                            <th>Điều chỉnh số dư xu</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- Phân trang xu -->
+            <div class="d-flex justify-content-between align-items-center mt-3" id="pagination-coins-container" style="display: none;">
+                <span class="text-muted small" id="pagination-coins-info"></span>
+                <nav>
+                    <ul class="pagination pagination-sm m-0" id="pagination-coins-controls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { auth } from "./firebase-init.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    
+    // Import các module JS đã phân tách
+    import "./js/admin-router.js";
+    import { initCharts, updateCharts, loadDashboardData } from "./js/admin-charts.js";
+    import { startRealtimeListeners, stopRealtimeListeners } from "./js/admin-users.js";
+    import "./js/admin-comments.js";
+    import "./js/admin-coins.js";
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.querySelector('.fw-semibold').innerHTML = `<i class="fa-solid fa-circle-user text-success me-1"></i> ${user.email}`;
+            // Load thống kê và khởi tạo biểu đồ
+            loadDashboardData().then(() => {
+                initCharts();
+                updateCharts();
+            });
+            // Bắt đầu lắng nghe thay đổi Firestore realtime
+            startRealtimeListeners();
+        } else {
+            stopRealtimeListeners();
+            window.location.href = "login.html";
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

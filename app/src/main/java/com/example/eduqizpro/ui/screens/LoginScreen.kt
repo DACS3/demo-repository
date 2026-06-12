@@ -15,16 +15,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.eduqizpro.data.AuthRepository
 import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun LoginScreen(
+    adminMessage: String? = null,        // ← thêm param nhận thông báo từ MainActivity
     onLoginSuccess: (String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
@@ -32,7 +35,7 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    
+
     val scope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository() }
 
@@ -45,31 +48,43 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0xFF6200EE), Color(0xFF3700B3))
-                        )
-                    ),
-                contentAlignment = Alignment.Center
+                    .height(280.dp)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Logo Placeholder
-                    Surface(
-                        modifier = Modifier.size(100.dp),
-                        shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.2f)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("Q", color = Color.White, fontSize = 60.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
+                // Tải ảnh học tập nghệ thuật trực tiếp từ internet qua thư viện Coil
+                AsyncImage(
+                    model = "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop",
+                    contentDescription = "Education Banner",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                // Lớp phủ Gradient mờ mịn để chữ hiển thị rõ ràng và đẹp mắt
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color(0x99000000), Color(0xCC3700B3))
+                            )
+                        )
+                )
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 50.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         text = "EduQizPro",
                         color = Color.White,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = "Học tập không giới hạn",
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
@@ -116,6 +131,8 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp)
                     )
 
+                    // Nếu có lỗi đăng nhập thông thường → ưu tiên hiện lỗi đó
+                    // Nếu không có lỗi nhưng có thông báo admin → hiện thông báo admin
                     if (errorMessage != null) {
                         Text(
                             text = errorMessage!!,
@@ -123,6 +140,31 @@ fun LoginScreen(
                             fontSize = 13.sp,
                             modifier = Modifier.padding(top = 8.dp)
                         )
+                    } else if (adminMessage != null) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3CD))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "⚠️",
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                                Text(
+                                    text = adminMessage,
+                                    color = Color(0xFF856404),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Start
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -167,7 +209,7 @@ fun LoginScreen(
                     }
                 }
             }
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,

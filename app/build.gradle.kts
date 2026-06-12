@@ -46,7 +46,15 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/INDEX.LIST"
             excludes += "META-INF/DEPENDENCIES"
-            excludes += "META-INF/versions/**"   // Tránh conflict với một số thư viện mới
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/NOTICE.md"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/versions/9/module-info.class"
+            // Tránh duplicate với Woodstox / StAX
+            pickFirsts += "META-INF/services/javax.xml.stream.XMLInputFactory"
+            pickFirsts += "META-INF/services/javax.xml.stream.XMLOutputFactory"
+            pickFirsts += "META-INF/services/javax.xml.stream.XMLEventFactory"
         }
     }
 }
@@ -71,7 +79,10 @@ dependencies {
 
     // Đọc file PDF & Word
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
-    implementation("org.apache.poi:poi-ooxml:5.3.0")   // Nâng nhẹ version
+    implementation("org.apache.poi:poi-ooxml:5.3.0")
+    // Woodstox — XMLInputFactory implementation cho Apache POI trên Android
+    implementation("com.fasterxml.woodstox:woodstox-core:6.7.0")
+    implementation("org.codehaus.woodstox:stax2-api:4.2.2")
 
     // ==================== FIREBASE (2026) ====================
     implementation(platform("com.google.firebase:firebase-bom:34.12.0"))

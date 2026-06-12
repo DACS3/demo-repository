@@ -7,7 +7,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -33,12 +32,8 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var fullName by remember { mutableStateOf("") }
-    var role by remember { mutableStateOf("USER") } // Mặc định là USER
-    
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var expanded by remember { mutableStateOf(false) } // Cho Dropdown menu
-
     val scope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository() }
 
@@ -102,54 +97,6 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Dropdown chọn Role
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = if (role == "ADMIN") "Quản trị viên (Admin)" else "Người học (User)",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Bạn là ai?") },
-                            modifier = Modifier.fillMaxWidth(),
-                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                            trailingIcon = {
-                                Icon(
-                                    Icons.Default.ArrowDropDown,
-                                    "Drop",
-                                    Modifier.clickable { expanded = true }
-                                )
-                            },
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                            modifier = Modifier.fillMaxWidth(0.8f)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Người học (User)") },
-                                onClick = {
-                                    role = "USER"
-                                    expanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Quản trị viên (Admin)") },
-                                onClick = {
-                                    role = "ADMIN"
-                                    expanded = false
-                                }
-                            )
-                        }
-                        // Lớp phủ để bắt sự kiện click vào TextField
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clickable { expanded = true }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -193,7 +140,7 @@ fun RegisterScreen(
                                 isLoading = true
                                 errorMessage = null
                                 try {
-                                    val success = authRepository.register(email, password, fullName, role)
+                                    val success = authRepository.register(email, password, fullName)
                                     if (success) {
                                         onRegisterSuccess()
                                     } else {

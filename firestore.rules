@@ -1,0 +1,104 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ────────────────────────────────────────────────────
+
+    // Kiểm tra người dùng đã đăng nhập chưa
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Kiểm tra người dùng có role ADMIN không
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "ADMIN";
+    }
+
+    // Kiểm tra người dùng có bị chặn bình luận không
+    function isCommentBlocked(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.isCommentBlocked == true;
+    }
+
+    // ─── Users ───────────────────────────────────────────────────────────────
+
+    match /users/{uid} {
+      // Đọc: chỉ chính chủ hoặc admin
+      allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
+
+      // Tạo tài khoản mới: chỉ chính chủ
+      allow create: if isAuthenticated() && request.auth.uid == uid;
+
+      allow update: if isAuthenticated() && (
+        // User thường chỉ được sửa fullName và coins, KHÔNG được sửa role hay isCommentBlocked
+        (
+          request.auth.uid == uid &&
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['role', 'isCommentBlocked'])
+        )
+        ||
+        // Admin được phép sửa tất cả (bao gồm isCommentBlocked)
+        isAdmin()
+      );
+
+      // Xóa: chỉ admin
+      allow delete: if isAdmin();
+    }
+
+    // ─── Quizzes ─────────────────────────────────────────────────────────────
+
+    match /quizzes/{quizId} {
+      // Đọc quiz public: ai cũng được
+      allow read: if isAuthenticated();
+
+      // Tạo quiz: chỉ user đã đăng nhập, creatorId phải khớp với uid hiện tại
+      allow create: if isAuthenticated() &&
+        request.resource.data.creatorId == request.auth.uid;
+
+      // Cập nhật quiz: chính chủ hoặc admin
+      allow update: if isAuthenticated() &&
+        (resource.data.creatorId == request.auth.uid || isAdmin());
+
+      // Xóa quiz: chính chủ hoặc admin
+      allow delete: if isAuthenticated() &&
+        (resource.data.creatorId == request.auth.uid || isAdmin());
+
+      // ─── Comments (sub-collection) ────────────────────────────────────────
+
+      match /comments/{commentId} {
+        // Đọc comment: ai đã đăng nhập đều được
+        allow read: if isAuthenticated();
+
+        // Tạo comment mới: phải đăng nhập, userId phải khớp uid thật,
+        // và TÀI KHOẢN KHÔNG BỊ CHẶN BÌNH LUẬN
+        allow create: if isAuthenticated() &&
+          request.resource.data.userId == request.auth.uid &&
+          !isCommentBlocked(request.auth.uid);
+
+        // Cập nhật comment (dùng cho reply array): phải đăng nhập,
+        // người gửi reply cũng không được bị chặn
+        allow update: if isAuthenticated() &&
+          !isCommentBlocked(request.auth.uid);
+
+        // Xóa: chính chủ comment hoặc admin
+        allow delete: if isAuthenticated() &&
+          (resource.data.userId == request.auth.uid || isAdmin());
+      }
+    }
+    // ─── Coin Transactions ───────────────────────────────────────────────────
+
+    match /coin_transactions/{txId} {
+      // Admin xem được tất cả giao dịch để thống kê
+      allow read: if isAdmin();
+
+      // User tự ghi lịch sử mua xu của mình (uid phải khớp)
+      allow create: if isAuthenticated() &&
+        request.resource.data.uid == request.auth.uid;
+
+      // Không ai được sửa/xóa lịch sử giao dịch
+      allow update, delete: if false;
+    }
+
+  }
+}

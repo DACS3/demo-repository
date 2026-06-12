@@ -16,17 +16,16 @@ open class BaseAIModel(protected val context: Context) {
         )
 
         firebaseAI.generativeModel(
-            // === CÁC MODEL ĐANG HOẠT ĐỘNG TỐT (thử theo thứ tự) ===
-            modelName = "gemini-2.5-flash",           // ← Khuyến nghị dùng tạm (ổn định)
-            // modelName = "gemini-2.5-flash-lite",   // Nhanh & rẻ hơn
-            // modelName = "gemini-1.5-flash",        // Fallback cũ
-            // modelName = "gemini-3.1-flash",        // Thử nếu muốn model mới
+            // === Thứ tự ưu tiên khuyến nghị 2026 ===
+            modelName = "gemini-2.5-flash-lite",     // ← Thử cái này trước (nhanh + ổn định hơn)
+            // modelName = "gemini-2.5-flash",        // Fallback cũ của bạn
+            // modelName = "gemini-1.5-flash",        // Stable lâu năm
 
             generationConfig = generationConfig {
-                temperature = 0.25f
+                temperature = 0.3f      // Giảm xuống để ít sáng tạo hơn → ít lỗi hơn
                 topK = 40
                 topP = 0.95f
-                maxOutputTokens = 8192
+                maxOutputTokens = 8192  // Tăng lên 8192 để hỗ trợ tạo số lượng câu hỏi lớn (ví dụ: 50 câu) không bị cắt nửa chừng
             }
         )
     }

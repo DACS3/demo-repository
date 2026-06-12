@@ -17,9 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.eduqizpro.data.SummaryRepository
 import com.example.eduqizpro.data.model.Summary
 import kotlinx.coroutines.launch
@@ -53,8 +56,16 @@ fun SavedSummariesScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        refreshList()
+    // Reload danh sách mỗi khi màn hình được resume (kể cả khi navigate back)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshList()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     Scaffold(
@@ -108,10 +119,12 @@ fun SavedSummariesScreen(
                     TextButton(
                         onClick = {
                             scope.launch {
-                                val success = summaryRepository.deleteSummary(summaryToDelete!!.id)
+                                val targetId = summaryToDelete!!.id
+                                val success = summaryRepository.deleteSummary(targetId)
                                 if (success) {
                                     Toast.makeText(context, "Đã xóa thành công", Toast.LENGTH_SHORT).show()
-                                    refreshList()
+                                    // Cập nhật in-memory lập tức để xóa tóm tắt khỏi giao diện
+                                    summaryList = summaryList.filter { it.id != targetId }
                                 }
                                 summaryToDelete = null
                             }
@@ -151,7 +164,8 @@ fun SavedSummariesScreen(
                                     val success = summaryRepository.saveSummary(updatedSummary)
                                     if (success) {
                                         Toast.makeText(context, "Đã cập nhật tên thành công", Toast.LENGTH_SHORT).show()
-                                        refreshList()
+                                        // Cập nhật in-memory phần tử bị chỉnh sửa lập tức để tránh nhấp nháy
+                                        summaryList = summaryList.map { if (it.id == updatedSummary.id) updatedSummary else it }
                                     }
                                     summaryToEdit = null
                                 }

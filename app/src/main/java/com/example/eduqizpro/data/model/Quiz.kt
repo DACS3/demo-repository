@@ -7,6 +7,9 @@ data class Quiz(
     val title: String = "",
     val description: String = "",
     val creatorId: String = "",
+    val creatorName: String = "Người dùng ẩn danh",
     val questions: List<QuizQuestion> = emptyList(),
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val visibility: String = "private", // private, public, friends
+    val likes: List<String> = emptyList()
 )

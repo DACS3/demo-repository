@@ -1,4 +1,4 @@
-package com.example.eduqizpro.ui.screens
+package com.example.eduqizpro.ui.screens.createquiz
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.eduqizpro.data.QuizRepository
+import com.example.eduqizpro.data.SaveQuizResult
 import com.example.eduqizpro.data.model.Quiz
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -37,10 +38,10 @@ fun QuizListScreen(
     val quizRepository = remember { QuizRepository() }
     var quizList by remember { mutableStateOf<List<Quiz>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    
+
     // State cho Dialog xác nhận xóa
     var quizToDelete by remember { mutableStateOf<Quiz?>(null) }
-    
+
     // State cho Dialog sửa thông tin
     var quizToEdit by remember { mutableStateOf<Quiz?>(null) }
     var editTitle by remember { mutableStateOf("") }
@@ -82,7 +83,7 @@ fun QuizListScreen(
                 ) {
                     items(quizList) { quiz ->
                         QuizCard(
-                            quiz = quiz, 
+                            quiz = quiz,
                             onClick = { onQuizClick(quiz) },
                             onDelete = { quizToDelete = quiz },
                             onEdit = {
@@ -95,7 +96,7 @@ fun QuizListScreen(
                 }
             }
         }
-        
+
         // Dialog xác nhận xóa
         if (quizToDelete != null) {
             AlertDialog(
@@ -106,10 +107,12 @@ fun QuizListScreen(
                     TextButton(
                         onClick = {
                             scope.launch {
-                                val success = quizRepository.deleteQuiz(quizToDelete!!.id)
+                                val targetId = quizToDelete!!.id
+                                val success = quizRepository.deleteQuiz(targetId)
                                 if (success) {
                                     Toast.makeText(context, "Đã xóa bộ đề", Toast.LENGTH_SHORT).show()
-                                    refreshList()
+                                    // Cập nhật in-memory lập tức để xóa bộ đề khỏi màn hình êm ái
+                                    quizList = quizList.filter { it.id != targetId }
                                 }
                                 quizToDelete = null
                             }
@@ -122,7 +125,7 @@ fun QuizListScreen(
             )
         }
 
-        // Dialog sửa thông tin bộ đề
+        // Dialog sửa thông tin bộ đề (ĐÃ SỬA)
         if (quizToEdit != null) {
             AlertDialog(
                 onDismissRequest = { quizToEdit = null },
@@ -153,12 +156,19 @@ fun QuizListScreen(
                                     title = editTitle,
                                     description = editDescription
                                 )
-                                val success = quizRepository.saveQuiz(context, updatedQuiz)
-                                if (success) {
-                                    Toast.makeText(context, "Đã cập nhật thông tin", Toast.LENGTH_SHORT).show()
-                                    refreshList()
+                                val result = quizRepository.saveQuiz(context, updatedQuiz, isNew = false)
+
+                                when (result) {
+                                    is SaveQuizResult.Success -> {
+                                        Toast.makeText(context, "Đã cập nhật thông tin", Toast.LENGTH_SHORT).show()
+                                        // Cập nhật in-memory phần tử đã sửa đổi lập tức để tránh nhấp nháy màn hình
+                                        quizList = quizList.map { if (it.id == updatedQuiz.id) updatedQuiz else it }
+                                        quizToEdit = null
+                                    }
+                                    is SaveQuizResult.Error -> {
+                                        Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                                    }
                                 }
-                                quizToEdit = null
                             }
                         },
                         enabled = editTitle.isNotBlank()
@@ -174,13 +184,13 @@ fun QuizListScreen(
 
 @Composable
 fun QuizCard(
-    quiz: Quiz, 
-    onClick: () -> Unit, 
+    quiz: Quiz,
+    onClick: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
     val date = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(quiz.timestamp))
-    
+
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(16.dp),

@@ -15,25 +15,25 @@ class QuizGenerator(context: Context) : BaseAIModel(context) {
         }
 
         val finalPrompt = """
-            Bạn là chuyên gia tạo đề trắc nghiệm chất lượng cao bằng tiếng Việt.
+Bạn là chuyên gia tạo đề trắc nghiệm chất lượng cao bằng tiếng Việt.
 
-            Yêu cầu của người dùng: $userInstruction
+Yêu cầu của người dùng: $userInstruction
 
-            Nội dung tài liệu:
-            $fileContent
+Nội dung tài liệu:
+$fileContent
 
-            **YÊU CẦU BẮT BUỘC - PHẢI TUÂN THỦ TUYỆT ĐỐI:**
-            - Trả về **DUY NHẤT** một mảng JSON hợp lệ. Không thêm bất kỳ chữ nào khác (không ```json, không giải thích).
-            - Định dạng chính xác:
-            [
-              {
-                "question": "Nội dung câu hỏi?",
-                "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
-                "correctAnswer": 0
-              }
-            ]
-            - correctAnswer là số từ 0 đến 3 (0 = A).
-        """.trimIndent()
+**YÊU CẦU BẮT BUỘC:**
+- Trả về **DUY NHẤT** một mảng JSON hợp lệ. Không thêm bất kỳ chữ nào khác (không ```json, không giải thích).
+- Định dạng chính xác:
+[
+  {
+    "question": "Nội dung câu hỏi?",
+    "options": ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4"],
+    "correctAnswer": 0
+  }
+]
+- correctAnswer là số từ 0 đến 3 (0 = A).
+""".trimIndent()
 
         return@withContext try {
             val response = generativeModel.generateContent(finalPrompt)
