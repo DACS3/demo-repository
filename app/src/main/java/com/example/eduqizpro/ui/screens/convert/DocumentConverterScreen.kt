@@ -118,18 +118,22 @@ fun DocumentConverterScreen(
         scope.launch {
             convertState = ConvertState.Converting
 
-            // DocumentConverter trả về null nếu thành công, String mô tả lỗi nếu thất bại
             val errorMsg: String? = withContext(Dispatchers.IO) {
                 runCatching {
-                    context.contentResolver.openOutputStream(outputUri)?.use { out ->
-                        val inputUri = selectedUri
-                            ?: return@runCatching "Không tìm thấy tệp đầu vào."
-                        if (conversionType == "WORD_TO_PDF") {
-                            DocumentConverter.docxToPdf(context, inputUri, out)
-                        } else {
-                            DocumentConverter.pdfToDocx(context, inputUri, out)
+                    val outputStream = context.contentResolver.openOutputStream(outputUri)
+                    if (outputStream == null) {
+                        "Không thể mở file đích để ghi. Thử chọn thư mục khác."
+                    } else {
+                        outputStream.use { out ->
+                            val inputUri = selectedUri
+                                ?: return@runCatching "Không tìm thấy tệp đầu vào."
+                            if (conversionType == "WORD_TO_PDF") {
+                                DocumentConverter.docxToPdf(context, inputUri, out)
+                            } else {
+                                DocumentConverter.pdfToDocx(context, inputUri, out)
+                            }
                         }
-                    } ?: "Không thể mở file đích để ghi. Thử chọn thư mục khác."
+                    }
                 }.getOrElse { e ->
                     "Lỗi không mong đợi: ${e.javaClass.simpleName}\n${e.message?.take(120)}"
                 }

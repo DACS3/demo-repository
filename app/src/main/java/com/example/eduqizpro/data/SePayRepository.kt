@@ -15,7 +15,7 @@ import java.net.URL
 // Bước 2: Liên kết tài khoản ngân hàng của bạn (MBBank, Vietcombank...)
 // Bước 3: Vào API Access -> Tạo API Token mới -> Dán vào đây
 // ────────────────────────────────────────────────────────────────────────────
-const val SEPAY_API_KEY = "" // ← API Token từ sepay.vn
+const val SEPAY_API_KEY = "ZMFIV21HR6OQTG0K4TI85IKNNPUZFAEZ8EJQCY94GOD91IXVXDAQHHTLMPCGBZ25" // ← API Token từ sepay.vn
 
 sealed class PaymentStatus {
     object Waiting : PaymentStatus()

@@ -83,6 +83,7 @@ dependencies {
     // Woodstox — XMLInputFactory implementation cho Apache POI trên Android
     implementation("com.fasterxml.woodstox:woodstox-core:6.7.0")
     implementation("org.codehaus.woodstox:stax2-api:4.2.2")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // ==================== FIREBASE (2026) ====================
     implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
